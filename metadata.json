@@ -1,0 +1,6 @@
+{
+  "name": "VeloCast - Cycling Route Weather & Wind Intelligence",
+  "description": "Accurate weather forecasting along your cycling route: headwind/tailwind analysis, feels-like temperature progression, and dynamic layering guide from your GPX file.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

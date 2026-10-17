@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* Leaflet map custom refinements */
+.leaflet-container {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: #020617;
+}
+
+/* Unobtrusive, dark-mode attribution bar */
+.leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.8) !important;
+  color: #94a3b8 !important;
+  font-size: 10px !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  margin: 0 10px 10px 0 !important;
+  border: 1px solid rgba(51, 65, 85, 0.6) !important;
+  backdrop-filter: blur(8px);
+}
+
+.leaflet-control-attribution a {
+  color: #cbd5e1 !important;
+  text-decoration: none !important;
+  font-weight: 500;
+}
+
+.leaflet-control-attribution a:hover {
+  text-decoration: underline !important;
+  color: #34d399 !important;
+}
+
+/* Custom cycling tooltip */
+.leaflet-tooltip {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+}
+
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+  border-top-color: rgba(15, 23, 42, 0.95) !important;
+  border-bottom-color: rgba(15, 23, 42, 0.95) !important;
+}
+
+/* Custom rider animated marker */
+.rider-scrubber-marker {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
