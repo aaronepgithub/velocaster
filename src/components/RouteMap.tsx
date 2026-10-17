@@ -261,7 +261,7 @@ export const RouteMap: React.FC<RouteMapProps> = ({
   };
 
   return (
-    <div className="relative w-full h-[520px] rounded-xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl" id="map-section">
+    <div className="relative isolate z-0 w-full h-[520px] rounded-xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl" id="map-section">
       {/* Map Element */}
       <div ref={mapContainerRef} className="w-full h-full" />
 
