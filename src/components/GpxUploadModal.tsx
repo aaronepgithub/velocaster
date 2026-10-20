@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Upload, FileText, CheckCircle2, AlertCircle, Link, Loader2 } from 'lucide-react';
-import { DEFAULT_GPX_DATA } from '../data/defaultRoute';
+import { DEFAULT_GPX_DATA, DEFAULT_GPX_NAME } from '../data/defaultRoute';
 import { fetchRwgpsRoute, extractRwgpsRouteId } from '../utils/rwgps';
 
 interface GpxUploadModalProps {
@@ -70,7 +70,7 @@ export const GpxUploadModal: React.FC<GpxUploadModalProps> = ({
   };
 
   const handleLoadDefault = () => {
-    onLoadGpx(DEFAULT_GPX_DATA, 'Paroby Rte');
+    onLoadGpx(DEFAULT_GPX_DATA, DEFAULT_GPX_NAME);
     onClose();
   };
 
@@ -232,7 +232,7 @@ export const GpxUploadModal: React.FC<GpxUploadModalProps> = ({
             onClick={handleLoadDefault}
             className="text-xs text-slate-400 hover:text-emerald-400 font-medium transition-colors"
           >
-            Reset to Test Route (Paroby Rte)
+            Reset to Test Route ({DEFAULT_GPX_NAME})
           </button>
 
           <button

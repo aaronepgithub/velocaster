@@ -111,45 +111,127 @@ Keep it concise, actionable, and pro-cyclist caliber.`;
         </button>
       </div>
 
-      {customAdvice ? (
-        <div className="mt-4 p-4 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 leading-relaxed whitespace-pre-line font-sans">
-          {customAdvice}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <div className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
-            <div className="text-xs font-bold text-white flex items-center gap-1.5 mb-1.5">
-              <Shield className="w-4 h-4 text-emerald-400" />
-              Aerodynamic Tactics
-            </div>
-            <p className="text-xs text-slate-400 leading-normal">
-              {windAnalysis.headwindPct > 35
-                ? `Heavy headwind exposure (${windAnalysis.headwindPct}%). Stay tucked in the drops, avoid flapping apparel, and maintain steady cadence (85-95 rpm) to avoid leg fatigue.`
-                : `Favorable route profile with ${windAnalysis.tailwindPct}% tailwind push. Capitalize on tailwind segments to cruise at higher speeds with lower metabolic cost.`}
-            </p>
-          </div>
+      {(() => {
+        if (!customAdvice) {
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
+                <div className="text-xs font-bold text-white flex items-center gap-1.5 mb-1.5">
+                  <Shield className="w-4 h-4 text-emerald-400" />
+                  Aerodynamic Tactics
+                </div>
+                <p className="text-xs text-slate-400 leading-normal">
+                  {windAnalysis.headwindPct > 35
+                    ? `Heavy headwind exposure (${windAnalysis.headwindPct}%). Stay tucked in the drops, avoid flapping apparel, and maintain steady cadence (85-95 rpm) to avoid leg fatigue.`
+                    : `Favorable route profile with ${windAnalysis.tailwindPct}% tailwind push. Capitalize on tailwind segments to cruise at higher speeds with lower metabolic cost.`}
+                </p>
+              </div>
 
-          <div className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
-            <div className="text-xs font-bold text-white flex items-center gap-1.5 mb-1.5">
-              <Zap className="w-4 h-4 text-amber-400" />
-              Pacing Advice
-            </div>
-            <p className="text-xs text-slate-400 leading-normal">
-              Starting at {startTimeStr} allows you to beat midday heat and winds. Keep power output capped around Zone 2/3 on early rollers so you don't burn matches before turning into headwind sectors.
-            </p>
-          </div>
+              <div className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
+                <div className="text-xs font-bold text-white flex items-center gap-1.5 mb-1.5">
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  Pacing Advice
+                </div>
+                <p className="text-xs text-slate-400 leading-normal">
+                  Starting at {startTimeStr} allows you to beat midday heat and winds. Keep power output capped around Zone 2/3 on early rollers so you don't burn matches before turning into headwind sectors.
+                </p>
+              </div>
 
-          <div className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
-            <div className="text-xs font-bold text-white flex items-center gap-1.5 mb-1.5">
-              <Droplets className="w-4 h-4 text-sky-400" />
-              Hydration & Fueling
+              <div className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
+                <div className="text-xs font-bold text-white flex items-center gap-1.5 mb-1.5">
+                  <Droplets className="w-4 h-4 text-sky-400" />
+                  Hydration & Fueling
+                </div>
+                <p className="text-xs text-slate-400 leading-normal">
+                  Target 1 bottle per 60–75 minutes. Cool morning air reduces perception of thirst, but persistent headwind airflow significantly accelerates respiratory water loss.
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 leading-normal">
-              Target 1 bottle per 60–75 minutes. Cool morning air reduces perception of thirst, but persistent headwind airflow significantly accelerates respiratory water loss.
-            </p>
+          );
+        }
+
+        // Parse custom advice into structured items matching the 3 cards
+        const cleanTitle = (raw: string) =>
+          raw.replace(/^\*+|\*+$/g, '').replace(/^[#\d\.\)\s]+/, '').trim();
+
+        const parseAdviceCards = (text: string) => {
+          const cards: { title: string; content: string }[] = [];
+          const lines = text.split('\n');
+          let currentCard: { title: string; content: string } | null = null;
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            const headerMatch = trimmed.match(/^#{1,4}\s*(?:\d+[\.\)]\s*)?(.*)$/);
+            const bulletMatch = trimmed.match(/^(?:[•*-]|\d+[\.\)])\s*(?:\*\*(.*?)\*\*|(.*?))[:–-]\s*(.*)$/);
+            const boldTitleMatch = trimmed.match(/^\*\*(.*?)\*\*[:–-]?\s*(.*)$/);
+
+            if (headerMatch && !headerMatch[1].toLowerCase().includes('tactical coach briefing') && !headerMatch[1].toLowerCase().includes('briefing')) {
+              if (currentCard) cards.push(currentCard);
+              currentCard = { title: cleanTitle(headerMatch[1]), content: '' };
+            } else if (bulletMatch) {
+              if (currentCard) cards.push(currentCard);
+              currentCard = { title: cleanTitle(bulletMatch[1] || bulletMatch[2] || ''), content: bulletMatch[3] || '' };
+            } else if (boldTitleMatch) {
+              if (currentCard) cards.push(currentCard);
+              currentCard = { title: cleanTitle(boldTitleMatch[1]), content: boldTitleMatch[2] || '' };
+            } else if (currentCard) {
+              currentCard.content = (currentCard.content ? currentCard.content + ' ' : '') + trimmed;
+            }
+          }
+          if (currentCard) cards.push(currentCard);
+          return cards;
+        };
+
+        const parsedCards = parseAdviceCards(customAdvice);
+
+        const getCardTheme = (title: string, index: number) => {
+          const lower = title.toLowerCase();
+          if (lower.includes('aero') || lower.includes('wind')) {
+            return { icon: <Shield className="w-4 h-4 text-emerald-400" /> };
+          }
+          if (lower.includes('pace') || lower.includes('pacing') || lower.includes('tact')) {
+            return { icon: <Zap className="w-4 h-4 text-amber-400" /> };
+          }
+          if (lower.includes('fuel') || lower.includes('hydrat') || lower.includes('nutri') || lower.includes('drink')) {
+            return { icon: <Droplets className="w-4 h-4 text-sky-400" /> };
+          }
+          const defaultIcons = [
+            <Zap className="w-4 h-4 text-amber-400" key="zap" />,
+            <Shield className="w-4 h-4 text-emerald-400" key="shield" />,
+            <Droplets className="w-4 h-4 text-sky-400" key="droplets" />,
+          ];
+          return { icon: defaultIcons[index % defaultIcons.length] };
+        };
+
+        if (parsedCards.length > 0) {
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              {parsedCards.map((card, idx) => {
+                const theme = getCardTheme(card.title, idx);
+                return (
+                  <div key={idx} className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800/80">
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5 mb-1.5">
+                      {theme.icon}
+                      <span>{card.title}</span>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-normal">
+                      {card.content}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
+        return (
+          <div className="mt-4 p-4 rounded-lg bg-slate-950/60 border border-slate-800/80 text-xs text-slate-300 leading-relaxed whitespace-pre-line font-sans">
+            {customAdvice}
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };
