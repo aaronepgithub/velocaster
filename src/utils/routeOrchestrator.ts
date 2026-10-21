@@ -144,8 +144,8 @@ export async function processRideRoute(
   // 6. Wind Analysis
   const windAnalysis = analyzeRouteWind(segments, unitSystem);
 
-  // 7. Layering Recommendations
-  const layering = generateLayeringRecommendation(segments, unitSystem);
+  // 7. Layering Recommendations (adjusted for rider pace & metabolic heat)
+  const layering = generateLayeringRecommendation(segments, unitSystem, speedValue);
 
   // 8. Range extremes
   let peakFeelsLike = -Infinity;

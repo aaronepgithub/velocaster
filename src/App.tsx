@@ -292,6 +292,8 @@ export default function App() {
           <LayeringGuide
             layering={data.layering}
             unitSystem={unitSystem}
+            startTimeStr={startTime}
+            speed={speed}
           />
         )}
 

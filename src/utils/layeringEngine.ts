@@ -1,11 +1,13 @@
 import { LayerItem, LayerTransition, LayeringRecommendation, RouteSegment } from '../types/cycling';
 
 /**
- * Computes cycling layering recommendations and exact in-ride transition triggers
+ * Computes cycling layering recommendations and exact in-ride transition triggers,
+ * adjusted for rider metabolic heat production based on estimated average speed.
  */
 export function generateLayeringRecommendation(
   segments: RouteSegment[],
-  unitSystem: 'imperial' | 'metric'
+  unitSystem: 'imperial' | 'metric',
+  riderSpeed: number = 17.5
 ): LayeringRecommendation {
   if (segments.length === 0) {
     return {
@@ -17,14 +19,48 @@ export function generateLayeringRecommendation(
     };
   }
 
-  // Convert everything to Fahrenheit internally for standard cycling rule thresholds
+  // Convert speed to mph for standardized metabolic calculation
+  const speedMph = unitSystem === 'imperial' ? riderSpeed : riderSpeed / 1.60934;
+
+  // Faster riders produce significantly higher metabolic wattage, keeping their core
+  // warmer in cold/cool conditions and requiring lighter kit compared to casual riders.
+  // Benchmark pace is ~15-16 mph (neutral 0°F offset).
+  let speedAdjustmentF = 0;
+  let paceTier: 'casual' | 'endurance' | 'brisk' | 'race' = 'endurance';
+  let paceDescription = '';
+
+  if (speedMph >= 20.0) {
+    paceTier = 'race';
+    // Racing/fast pace: riders generate 250W-350W+ continuous heat (+7°F perceived warmth)
+    speedAdjustmentF = 7.0;
+    paceDescription = 'Fast / Race Pace (High metabolic heat output: dress lighter to prevent overheating)';
+  } else if (speedMph >= 17.0) {
+    paceTier = 'brisk';
+    // Brisk pace: steady tempo effort (+4°F perceived warmth)
+    speedAdjustmentF = 4.0;
+    paceDescription = 'Brisk Tempo Pace (Elevated body heat output: reduced bulk needed)';
+  } else if (speedMph >= 14.5) {
+    paceTier = 'endurance';
+    speedAdjustmentF = 0.0;
+    paceDescription = 'Endurance Pace (Moderate heat output: standard layering)';
+  } else {
+    paceTier = 'casual';
+    // Casual pace: low wattage output (~100-140W), requires more insulation against the chill (-5°F perceived warmth)
+    speedAdjustmentF = -5.0;
+    paceDescription = 'Casual Pace (Lower wattage heat output: extra insulation recommended)';
+  }
+
+  // Convert raw weather feels-like to Fahrenheit internally
   const startWeather = segments[0].weather;
-  const startFeelsF = unitSystem === 'imperial'
+  const rawStartFeelsF = unitSystem === 'imperial'
     ? startWeather.feelsLike
     : (startWeather.feelsLike * 9) / 5 + 32;
 
-  let minFeelsF = startFeelsF;
-  let maxFeelsF = startFeelsF;
+  // Effective felt temperature experienced by the rider including metabolic exertion heat
+  const startFeelsF = rawStartFeelsF + speedAdjustmentF;
+
+  let rawMinFeelsF = rawStartFeelsF;
+  let rawMaxFeelsF = rawStartFeelsF;
   let maxPrecip = startWeather.precipProb;
   let maxWindSpeed = startWeather.windSpeed;
 
@@ -32,13 +68,15 @@ export function generateLayeringRecommendation(
     const f = unitSystem === 'imperial'
       ? s.weather.feelsLike
       : (s.weather.feelsLike * 9) / 5 + 32;
-    if (f < minFeelsF) minFeelsF = f;
-    if (f > maxFeelsF) maxFeelsF = f;
+    if (f < rawMinFeelsF) rawMinFeelsF = f;
+    if (f > rawMaxFeelsF) rawMaxFeelsF = f;
     if (s.weather.precipProb > maxPrecip) maxPrecip = s.weather.precipProb;
     if (s.weather.windSpeed > maxWindSpeed) maxWindSpeed = s.weather.windSpeed;
   }
 
-  const tempDeltaF = maxFeelsF - startFeelsF;
+  const minFeelsF = rawMinFeelsF + speedAdjustmentF;
+  const maxFeelsF = rawMaxFeelsF + speedAdjustmentF;
+  const tempDeltaF = rawMaxFeelsF - rawStartFeelsF;
 
   // Build Start Apparel
   const startApparel: LayerItem[] = [];
@@ -432,7 +470,11 @@ export function generateLayeringRecommendation(
   }
 
   let summaryNote = '';
-  if (tempDeltaF >= 12) {
+  if (paceTier === 'race') {
+    summaryNote = `Fast pace (${Math.round(riderSpeed)} ${unitSystem === 'imperial' ? 'mph' : 'km/h'}) produces high metabolic warmth (+${Math.round(speedAdjustmentF)}°F / +${Math.round((speedAdjustmentF * 5) / 9)}°C internal warmth offset). Apparel calibrated for lighter, more breathable layers to prevent overheating.`;
+  } else if (paceTier === 'casual') {
+    summaryNote = `Casual pace (${Math.round(riderSpeed)} ${unitSystem === 'imperial' ? 'mph' : 'km/h'}) produces lower continuous body heat. Apparel has been adjusted with extra thermal protection against wind and cold.`;
+  } else if (tempDeltaF >= 12) {
     summaryNote = `Significant morning warmup of +${Math.round(unitSystem === 'imperial' ? tempDeltaF : (tempDeltaF * 5) / 9)}° expected. Layer modularly (vest + arm warmers) so you can shed gear into your pockets as the sun rises.`;
   } else if (maxWindSpeed > 15) {
     summaryNote = `Strong breezes up to ${Math.round(maxWindSpeed)} ${unitSystem === 'imperial' ? 'mph' : 'km/h'} will increase windchill on exposed stretches. Keep a snug wind vest zipped during headwinds and long descents.`;
@@ -448,6 +490,10 @@ export function generateLayeringRecommendation(
     transitions,
     summaryNote,
     comfortRating,
+    riderSpeedMph: Math.round(speedMph * 10) / 10,
+    speedAdjustmentF,
+    paceTier,
+    paceDescription,
   };
 }
 

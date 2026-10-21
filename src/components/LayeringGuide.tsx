@@ -12,15 +12,33 @@ import {
   CheckCircle2,
   Package,
   AlertTriangle,
+  Zap,
+  Flame,
 } from 'lucide-react';
 
 interface LayeringGuideProps {
   layering: LayeringRecommendation;
   unitSystem: UnitSystem;
+  startTimeStr?: string;
+  speed?: number;
 }
 
-export const LayeringGuide: React.FC<LayeringGuideProps> = ({ layering, unitSystem }) => {
-  const { startApparel, pocketItems, transitions, summaryNote, comfortRating } = layering;
+export const LayeringGuide: React.FC<LayeringGuideProps> = ({
+  layering,
+  unitSystem,
+  startTimeStr = '08:30',
+  speed,
+}) => {
+  const {
+    startApparel,
+    pocketItems,
+    transitions,
+    summaryNote,
+    comfortRating,
+    paceTier,
+    speedAdjustmentF = 0,
+    paceDescription,
+  } = layering;
 
   const renderIcon = (iconName: string) => {
     switch (iconName) {
@@ -43,10 +61,20 @@ export const LayeringGuide: React.FC<LayeringGuideProps> = ({ layering, unitSyst
 
   const distUnit = unitSystem === 'imperial' ? 'mi' : 'km';
   const tempUnit = unitSystem === 'imperial' ? '°F' : '°C';
+  const speedUnit = unitSystem === 'imperial' ? 'mph' : 'km/h';
+
+  // Format departure time nicely if in HH:MM format
+  const formatDeparture = (timeStr: string) => {
+    const [h, m] = timeStr.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return timeStr;
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayH = h % 12 === 0 ? 12 : h % 12;
+    return `${displayH}:${m.toString().padStart(2, '0')} ${period}`;
+  };
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg text-slate-200 mt-6" id="layering-section">
-      {/* Header & Comfort Badge */}
+      {/* Header & Badges */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -55,14 +83,35 @@ export const LayeringGuide: React.FC<LayeringGuideProps> = ({ layering, unitSyst
               Dynamic Layering & Apparel Strategy
             </h3>
           </div>
-          <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+          <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
             {summaryNote}
           </p>
         </div>
 
-        <div className="shrink-0">
+        <div className="shrink-0 flex items-center flex-wrap gap-2">
+          {/* Pace & Metabolic Warmth Badge */}
+          {speed !== undefined && (
+            <div
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold ${
+                paceTier === 'race'
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                  : paceTier === 'brisk'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : paceTier === 'casual'
+                  ? 'bg-sky-500/10 border-sky-500/30 text-sky-300'
+                  : 'bg-slate-800 border-slate-700 text-slate-300'
+              }`}
+              title={paceDescription}
+            >
+              <Flame className="w-3.5 h-3.5" />
+              <span>
+                {speed} {speedUnit} ({speedAdjustmentF > 0 ? `+${speedAdjustmentF}°F body heat` : speedAdjustmentF < 0 ? `${speedAdjustmentF}°F casual pace` : 'standard effort'})
+              </span>
+            </div>
+          )}
+
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-semibold text-xs">
-            <span>Condition Rating:</span>
+            <span>Condition:</span>
             <strong className="text-white">{comfortRating}</strong>
           </div>
         </div>
@@ -74,7 +123,7 @@ export const LayeringGuide: React.FC<LayeringGuideProps> = ({ layering, unitSyst
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Wear at Departure (8:30 AM Start)
+              Wear at Departure ({formatDeparture(startTimeStr)} Start)
             </h4>
             <span className="text-[11px] text-slate-500">Put on before rolling out</span>
           </div>

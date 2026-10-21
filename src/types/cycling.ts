@@ -147,4 +147,8 @@ export interface LayeringRecommendation {
   transitions: LayerTransition[];
   summaryNote: string;
   comfortRating: 'Comfortable' | 'Chilly at Start' | 'Challenging Cold' | 'Hot & Humid' | 'Showers Expected';
+  riderSpeedMph?: number;
+  speedAdjustmentF?: number;
+  paceTier?: 'casual' | 'endurance' | 'brisk' | 'race';
+  paceDescription?: string;
 }
